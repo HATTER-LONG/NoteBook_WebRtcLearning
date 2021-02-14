@@ -72,4 +72,4 @@ WebRTC 有三个模块，Voice Engine（音频引擎），Video Engine（视频�
 
 ## 引用
 
-1. [WebRTC 音视频引擎研究–整体架构分析](https://blog.csdn.net/temotemo)
+1. [WebRTC 音视频引擎研究–整体架构分析](https://blog.csdn.net/temotemo/article/details/7530504)

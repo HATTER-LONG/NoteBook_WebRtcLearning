@@ -1,3 +1,4 @@
 build
 .cache
 .vscode
+LibWebRtcUsingExample/Lib/x64/Debug/*

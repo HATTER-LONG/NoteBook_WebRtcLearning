@@ -26,7 +26,7 @@ WebRTC（Web Real-Time Communication）项目的最终目的主要是让 Web 开
 
 1. Your Web App：Web 开发者开发的程序，Web 开发者可以基于集成 WebRTC 的浏览器提供的 web API 开发基于视频、音频的实时通信应用。
 2. Web API：面向第三方开发者的 WebRTC 标准 API（Javascript），使开发者能够容易地开发出类似于网络视频聊天的 web 应用。
-3. WebRTC Native C++ API：本地 C++ API 层，使浏览器厂商容易实现 WebRTC 标准的 Web API，抽象地对数字信号过程进行处理。
+3. WebRTC Native C++ API：本地 C++ API 层，使浏览器厂商容易实现 WebRTC 标准的 Web API，抽象地对数字信号过程进行处理。这一层的主要作用就是把 WebRtc 的核心功能暴露出来，如设备管理，音视频流数据采集等，方便各个软件厂商集成到自家应用中，比如浏览器厂商。其中 PeerConnection 是该层最核心的一个模块，即对等连接模块；该模块中实现了很多功能，如 P2P 穿洞、通信链路的建立和优选、流数据传输、非音视频数据传输、传输质量报告和统计等。
 4. Transport / Session：传输/会话层，会话层组件采用了 libjingle 库的部分组件实现，无须使用 协议。XMPP/jingle 协议。
    - XMPP 协议：主要用于解决获取用户列表、交换用户数、信令交换。
    - RTP Stack 协议：Real Time Protocol。
@@ -74,10 +74,20 @@ WebRTC（Web Real-Time Communication）项目的最终目的主要是让 Web 开
 
 WebRTC 有三个模块，Voice Engine（音频引擎），Video Engine（视频引擎），Transport。
 
-- Voice Engine 包含 iSAC/iLBC Codec（音频编解码器，前者是针对宽带和超宽带，后者是针对窄带），NetEQ for voice（处理网络抖动和语音包丢失），Echo Canceler（回声消除器），Noise Reduction（噪声抑制）；
-- Video Engine 包含 VP8 Codec（视频图像编解码器），Video jitter buffer（视频抖动缓冲器，处理视频抖动和视频信息包丢失），Image enhancements（图像质量增强）。
-- Transport 包含 SRTP（安全的实时传输协议，用以音视频流传输），Multiplexing （多路复用），P2P，STUN+TURN+ICE（用于 NAT 网络和防火墙穿越的）。
-  - 安全传输可能还会用到 DTLS（数据报安全传输），用于加密传输和密钥协商。整个 WebRTC 通信是基于 UDP 的。
+- 第一个模块 Voice Engine， Voice Engine 是一个包含了系列音频处理功能的框架，如音频编解码、音频优化等。分别来陈述这几个功能：
+  1. 编解码器，webrtc内置的音频编码器有iSAC、iLBC。iSAC是针对VoIP（Voice over Internet Protocol，即基于IP的语音传输）和音频流在宽带和超宽带环境中进行音频传输的编解码器 ，是WebRTC音频引擎的默认的编解码器，技术成熟，且被广泛应用在各种实时通信软件中，如Skype、QQ；iLBC则是VoIP在窄带环境中的语音编解码器，在网络丢包较为严重的情况下仍能保持较好通话质量，该编解码器应用广泛。
+  2. NetEQ是网络语音信号处理的组件，其算法能自适应网络环境的变化，有效的处理因网络抖动而导致数据丢包所造成的音频质量问题，这一技术可谓是GIPS的看家本领，在webrtc中占据着至关重要的位置。
+  3. Echo Canceler/Noise Reduction，Echo Canceler是处理回声消除模块，能有效的消除采集音频带来的回声影响；Noise Reduction是抑制噪音模块，如有效的抑制多种噪音（如嘶嘶声，风扇噪音等）。总而言之，在音频引擎中各种语音处理模块/组件都非常优秀，并且广泛在各类工程应用软件中。
+
+- 第二个模块 Video Engine，Video Engine 是一个包含了系列视频处理功能的框架，如编码、防网络抖动、图像处理等。分别来陈述这几个功能：
+  1. 编解码器，VP8是专为解决网络传输延时设计的视频编解码器，基于此编解码技术可以凭借更少的数据量得到更高的视频质量，其数据压缩率和性能方面比市场上其他编解码器高，其功能特点非常适合实时通信，是webrtc中默认的视频编解码器。
+  2. Video Jitter Buffer：视频抖动缓冲器，实时视频通信难免会因为网络的原因导致视频的抖动或者视频数据的丢失，视频抖动缓冲器依靠独特的算法，有效的解决这类情况对视频质量造成的影响。
+  3. Image enhancements：图像质量增强模块，本模是用来做图像处理以提升视频画面质量的，如图像明暗度检测、颜色增强、降噪处理等。
+
+- 第三个模块 Transport，即数据传输模块。在 webrtc 中，数据传输除了音视频流数据之外，还可以传输文件、文本、图片等其他二进制数据。我们在使用 webrtc 底层开源代码时，完全可以根据需求有针对性的选择某些模块单独使用，比如单独选择传输模块来帮我们解决复杂的传输问题，我们无需考虑传输时的 P2P 链路搭建，链路优选，数据丢包重传等问题。接下来分别来陈述本模块的几个重要的功能：
+  1. 传输协议，在 webrtc 中，底层传输协议基于 UDP（关于 UDP 和 TCP，请读者自行查阅资料），上层基于 RTP/SRTP 协议。RTP 是 (Real Time Protocol) 提供了具有实时特征的、端到端的数据传送服务协议，适用于传输声音，图像数据，更多关于RTP协议的资料可以自行查阅。但在 RTP 中，并未考虑到数据传输的安全性，所以不符合安全性要求较高的应用需求，为了解决此问题，SRTP 应运而生。SRTP(SecureReal-time Transport Protocol) 是在 RTP 的基础上加入了安全机制的传输协议，SRTP 为数据提供了加密、消息认证、完整性保证和重放保护等功能，最大程度保障了数据传输的安全性。注意，RTP/SRTP 协议本身并不能保证传输质量，即数据传输过程中丢失是很常见的。传输质量由下层的网络质量决定，但即使网络质量能保证足够好，RTP/SRTP 也不能保证数据包的按顺序到达，于是引入了 RTCP/SRTCP，即 RTP 控制协议（RTP Control Protocol），该协议用于数据传输时的服务质量监视与反馈、媒体间同步，以及多播组中成员的标识，一句话来讲就是监控 RTP 传输的质量，例如数据发送端或者接收端通过 RTCP 数据检测此刻网络传输的效果不理想，丢包率较高，发送端和接收端会自动调整收发数据包的速率，必要的情况下还会更换通信链路，以此来尽可能的提高传输质量。SRTCP 如同 SRTP一样，属于对应协议的加密版，这里不在赘述。
+  2. Multiple exing，通道复用，即多个流数据传输共用一个通道， 以此提高传输效率。
+  3. P2P 相关技术，实现 P2P 通信需要用到这些技术：STUN、TURN、ICE。
 
 ## 参考
 

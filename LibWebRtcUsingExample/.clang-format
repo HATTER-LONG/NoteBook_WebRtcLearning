@@ -1,0 +1,48 @@
+#https://clang.llvm.org/docs/ClangFormatStyleOptions.html
+Language:      Cpp
+BasedOnStyle:  WebKit
+AccessModifierOffset: -4                                # public 等标识缩进空格数
+AlignOperands:  Align                                   # 以操作符对齐进行切割
+AlignTrailingComments: true                             # 注释对齐
+AllowAllArgumentsOnNextLine: true                       # 参数列表过长则会将所有参数放到下一行
+AllowAllConstructorInitializersOnNextLine: true         # 初始化列表过长放到下一行
+AllowAllParametersOfDeclarationOnNextLine: true         # 函数方法声明参数过长放到下一行
+AllowShortCaseLabelsOnASingleLine: false                # 短小的 case 语句不会放到一行
+AllowShortEnumsOnASingleLine: false                     # 短小的 enum 语句不会放到一行
+AllowShortFunctionsOnASingleLine: Inline                # 短函数空实现可放在同一行，其余均换行
+AllowShortIfStatementsOnASingleLine: Never              # 短 if 语句当没有 else 分支时可放在同一行
+AllowShortLoopsOnASingleLine: false                     # 循环语句代码块不会放在同一行
+AllowShortBlocksOnASingleLine: Empty                    # 空代码块会放到同一行
+AlwaysBreakAfterReturnType: None                        # 返回值是否换行
+AlwaysBreakTemplateDeclarations: Yes                    # 模板声明中断样式
+BinPackArguments: true                                  # 函数调用参数自动对齐
+BinPackParameters: true                                 # 函数参数自动对齐
+BreakBeforeBinaryOperators: None                        # 二元操作符后换行
+BreakBeforeBraces: Allman                               # 大括号换行样势
+BreakBeforeTernaryOperators: true                       # 换行后放置三元操作符
+BreakConstructorInitializers: BeforeComma               # 初始化列表样势
+BreakInheritanceList: BeforeComma                       # 继承样势
+CompactNamespaces: false                                # namespace 各占一行
+ConstructorInitializerAllOnOneLineOrOnePerLine: false   # 如果构造函数初始化式不能放在一行中，则将每个初始化式放在单独的一行中
+ConstructorInitializerIndentWidth: 8                    # 用于缩进构造函数初始化列表和继承列表的字符数
+ContinuationIndentWidth: 4                              # 行延续的缩进宽度
+DisableFormat: false                                    # 禁用 clang-format
+FixNamespaceComments: true                              # 自动修正命名空间注释
+ForEachMacros: [ foreach, Q_FOREACH, BOOST_FOREACH ]    # 宏矢量
+IncludeBlocks: Regroup                                  # include 顺序自动调整模式
+IndentCaseLabels: true                                  # case 与 switch 语句不同级
+IndentWidth: 4                                          # Tab 空格数
+IndentWrappedFunctionNames: true                        # 如果函数定义或声明包装在类型之后，则缩进
+KeepEmptyLinesAtTheStartOfBlocks: true                  # 保留代码块开头存在的空行
+MaxEmptyLinesToKeep: 3                                  # 保留最多的连续空行数
+NamespaceIndentation: None                              # 命名空间不进行缩进
+PointerAlignment: Left                                  # 指针、应用左对齐
+SpaceBeforeAssignmentOperators: true                    # 赋值操作符前后加空格
+SpaceBeforeParens: ControlStatements                    # 大括号前加空格的模式
+SpaceInEmptyParentheses: false                          # 是否再空的()中加空格( )
+SpacesBeforeTrailingComments: 3                         # // 注释后的空格数
+SpacesInAngles:  false                                  # 是否在 <a> 中插入空格 < a >
+SpacesInContainerLiterals: true                         # 在容器列表中是否插入空格
+Standard:        Auto                                   # 标准
+UseTab:          Never                                  # 不使用制表符
+ColumnLimit:     110                                   

@@ -5,7 +5,9 @@
   - [WebRtc 架构](#webrtc-架构)
     - [WebRtc 架构组件](#webrtc-架构组件)
     - [模块细致讲解](#模块细致讲解)
-  - [引用](#引用)
+  - [参考](#参考)
+
+我们使用 webrtc 的主题要目的是应用它的 A/V 捕获、视频显示、音频播放、音视频压缩、网络通信。本文主要记录再应用程序中如何使用 webrtc 库。
 
 ## 什么是 WebRtc
 
@@ -25,9 +27,14 @@ WebRTC（Web Real-Time Communication）项目的最终目的主要是让 Web 开
 1. Your Web App：Web 开发者开发的程序，Web 开发者可以基于集成 WebRTC 的浏览器提供的 web API 开发基于视频、音频的实时通信应用。
 2. Web API：面向第三方开发者的 WebRTC 标准 API（Javascript），使开发者能够容易地开发出类似于网络视频聊天的 web 应用。
 3. WebRTC Native C++ API：本地 C++ API 层，使浏览器厂商容易实现 WebRTC 标准的 Web API，抽象地对数字信号过程进行处理。
-4. Transport / Session：传输/会话层，会话层组件采用了 libjingle 库的部分组件实现，无须使用 xmpp/jingle 协议。
+4. Transport / Session：传输/会话层，会话层组件采用了 libjingle 库的部分组件实现，无须使用 协议。XMPP/jingle 协议。
+   - XMPP 协议：主要用于解决获取用户列表、交换用户数、信令交换。
    - RTP Stack 协议：Real Time Protocol。
-   - STUN / ICE：可以通过 STUN 和 ICE 组件来建立不同类型网络间的呼叫连接。
+   - STUN / ICE：可以通过 STUN 和 ICE 组件来建立不同类型网络间的呼叫连接。现实网络环境有三种情况：
+     1. 公共网络：这类网络 IP 之间可以不受限制的进行直接访问。
+     2. NAT 网络：这类网络主机在私有内网中，没有单独的公网 IP。但可以通过打洞来找到它在公网中固定的网络地址。STUN 协议就是解决些网络问题。
+     3. 严格的受限 NAT 网络：这类网络中的主机在私网内，只能单向访问外网。外网不能直接访问它。所以这类网络需要通过在公共网络上的 TURN 服务器来进行数据中转。TURN 协议就是解决此网络问题的。
+     4. 为了解决地址转换、防火墙限制访问等问题。所以提供了ICE 协议，ICE 协议是一个框架，它依赖 STUN 协议解决完全锥形 NAT、以及受限锥形 NAT。TURN 协议用于解决严格受限 NAT 网络的问题。
    - SessionManagement：一个抽象的会话层，提供会话建立和管理功能。该层协议留给应用开发者自定义实现。
 5. VoiceEngine：音频引擎是包含一系列音频多媒体处理的框架，包括从视频采集卡到网络传输端等整个解决方案。
       - iSAC（Internet Speech Audio Codec）：针对 VoIP 和音频流的宽带和超宽带音频编解码器，是 WebRTC 音频引擎的默认的编解码器；
@@ -52,7 +59,9 @@ WebRTC（Web Real-Time Communication）项目的最终目的主要是让 Web 开
         - NetEQ 算法：自适应抖动控制算法以及语音包丢失隐藏算法。使其能够快速且高解析度地适应不断变化的网络环境，确保音质优美且缓冲延迟最小。是 GIPS 公司独步天下的技术，能够有效的处理由于网络抖动和语音包丢失时候对语音质量产生的影响。NetEQ 是 WebRTC 中一个极具价值的技术，对于提高 VoIP 质量有明显效果，加以 AEC\NR\AGC 等模块集成使用，效果更好。
 
       - AEC（Acoustic Echo Canceler）：回声消除器是一个基于软件的信号处理元件，能实时的去除 mic 采集到的回声。
+
       - NR（Noise Reduction）：噪声抑制也是一个基于软件的信号处理元件，用于消除与相关VoIP的某些类型的背景噪声（嘶嘶声，风扇噪音等等… …）。
+
       - Opus：持从 6 kbit/s 到 510 kbit/s 的恒定和可变比特率编码，帧大小从 2.5 ms 到 60 ms，各种采样率从 8 kHz（4 kHz 带宽）到 48 kHz（20 kHz带宽，可复制人类听觉系统的整个听力范围）。由 IETF RFC 6176 定义。
 
 6. VideoEngine：WebRTC 视频处理引擎，其中包含了一系列视频处理的整体框架，从摄像头采集视频到视频信息网络传输再到视频显示整个完整过程的解决方案。
@@ -70,6 +79,6 @@ WebRTC 有三个模块，Voice Engine（音频引擎），Video Engine（视频�
 - Transport 包含 SRTP（安全的实时传输协议，用以音视频流传输），Multiplexing （多路复用），P2P，STUN+TURN+ICE（用于 NAT 网络和防火墙穿越的）。
   - 安全传输可能还会用到 DTLS（数据报安全传输），用于加密传输和密钥协商。整个 WebRTC 通信是基于 UDP 的。
 
-## 引用
+## 参考
 
-1. [WebRTC 音视频引擎研究–整体架构分析](https://blog.csdn.net/temotemo/article/details/7530504)
+《WebRtc 零基础开发教程》

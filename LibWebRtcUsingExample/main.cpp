@@ -4,9 +4,11 @@
 
 int main()
 {
-    std::unique_ptr<webrtc::VideoCaptureModule::DeviceInfo> info(webrtc::VideoCaptureFactory::CreateDeviceInfo());
+    std::unique_ptr<webrtc::VideoCaptureModule::DeviceInfo> info(
+        webrtc::VideoCaptureFactory::CreateDeviceInfo());
 
-    if (info) {
+    if (info)
+    {
         int num_devices = info->NumberOfDevices();
         std::cout << (num_devices);
     }

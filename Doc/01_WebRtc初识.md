@@ -13,6 +13,11 @@
 
 WebRTC（Web Real-Time Communication）项目的最终目的主要是让 Web 开发者能够基于浏览器（Chrome\FireFox\…）轻易快捷开发出丰富的实时多媒体应用，而无需下载安装任何插件，Web 开发者也无需关注多媒体的数字信号处理过程，只需编写简单的 Javascript 程序即可实现。
 
+- 特点：
+  1. 跨平台。
+  2. 实时传输。
+  3. 音视频引擎。
+
 ## WebRtc 架构
 
 ![WebRtc](./Img/WebRtc.png)

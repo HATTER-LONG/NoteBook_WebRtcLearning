@@ -6,7 +6,6 @@
     - [libjingle 网络传输模块](#libjingle-网络传输模块)
     - [WebRtc Native C++ API](#webrtc-native-c-api)
 
-
 ## WebRtc 源码结构
 
 1. [api](../LibWebRtcUsingExample/Include/api)：该目录存放了 WebRTC 接口层的代码，即核心层中的 WebRTC C++ API，浏览器厂商或者其他软件开发者可以在此调用或者调整 WebRTC API。

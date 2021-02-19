@@ -2,6 +2,7 @@
 
 - [WebRtc 初识](#webrtc-初识)
   - [什么是 WebRtc](#什么是-webrtc)
+  - [流媒体服务器](#流媒体服务器)
   - [WebRtc 架构](#webrtc-架构)
     - [WebRtc 架构组件](#webrtc-架构组件)
     - [模块细致讲解](#模块细致讲解)
@@ -18,9 +19,18 @@ WebRTC（Web Real-Time Communication）项目的最终目的主要是让 Web 开
   2. 实时传输。
   3. 音视频引擎。
 
+- WebRtc 仅支持点对点功能，想要实现会议、直播等还需要流媒体服务器进行配合。
+
+## 流媒体服务器
+
+1. 信令服务器：处理用户功能逻辑。
+2. 数据处理：通过数据处理结合信令进行分发。
+
+![01](Img/01_1.png)
+
 ## WebRtc 架构
 
-![WebRtc](./Img/WebRtc.png)
+![WebRtc](./Img/01_00.png)
 
 - 架构图颜色标识说明：
   1. 紫色部分是 Web 开发者 API 层；

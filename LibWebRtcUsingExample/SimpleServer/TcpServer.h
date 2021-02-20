@@ -2,11 +2,11 @@
 
 namespace MServer
 {
-class Server
+class TCPServer
 {
 public:
-    Server();
-    ~Server();
+    TCPServer();
+    ~TCPServer();
 
 public:
     void run();

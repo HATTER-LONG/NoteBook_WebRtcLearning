@@ -1,4 +1,4 @@
-#include "server.h"
+#include "TcpServer.h"
 #include "spdlog/spdlog.h"
 
 #include <event2/buffer.h>
@@ -61,15 +61,15 @@ inline void accept_error_cb(struct evconnlistener* listener, void* ctx)
     event_base_loopexit(base, NULL);
 }
 
-Server::Server()
+TCPServer::TCPServer()
 {
     info("{} construct ...", __FUNCTION__);
 }
-Server::~Server()
+TCPServer::~TCPServer()
 {
     info("{} destruct ...", __FUNCTION__);
 }
-void Server::run()
+void TCPServer::run()
 {
     struct event_base* base = event_base_new(); /* 初始化event_base */
     if (!base)

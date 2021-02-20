@@ -27,4 +27,4 @@ target_link_libraries(HelloWorld
     ${LOCAL_LINK_LIB} 
 )
 
-add_subdirectory(MediaServer)
+add_subdirectory(SimpleServer)

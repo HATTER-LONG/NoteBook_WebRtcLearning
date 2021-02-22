@@ -6,6 +6,17 @@
     - [STUN 协议规格](#stun-协议规格)
   - [STUN Message Body](#stun-message-body)
   - [ICE](#ice)
+    - [ICE Candidate](#ice-candidate)
+    - [Candidate 类型](#candidate-类型)
+    - [收集 Candidate](#收集-candidate)
+    - [ICE 具体功能](#ice-具体功能)
+  - [DTLS 协议](#dtls-协议)
+  - [OpenSSL](#openssl)
+    - [TLS 协议](#tls-协议)
+    - [OpenSSL 原理](#openssl-原理)
+    - [DTLS](#dtls)
+    - [DTLS-SRTP](#dtls-srtp)
+    - [libsrtp](#libsrtp)
 
 ## STUN 协议
 
@@ -62,4 +73,115 @@ RFC3489 定义的属性：
 
 ## ICE
 
-ICE（interactive Connectivity Establishment），需要两端进行交互才能创建链接。
+ICE（interactive Connectivity Establishment），需要通讯的两端进行交互才能创建链接。建立过程如下图：
+
+![0606](./Img/06_06.png)
+
+### ICE Candidate
+
+可以进行链接的地址，每个 candidate 是一个地址，其包括：协议、IP、端口 和 类型。
+> a=candidate:...UDP...192.169.1.2 1816  type:host
+
+### Candidate 类型
+
+1. 主机候选者。本机的地址信息。
+2. 反射候选者。穿过 NAT 后被转换过的地址信息。
+3. 中继候选者。当穿越 NAT 不成功后，需要服务器中转后的地址信息。
+
+![0607](./Img/06_07.png)
+
+### 收集 Candidate
+
+1. Host Candidate：本机所有 IP 和指定端口。
+2. Reflexive Candidate：STUN/TURN 服务，得到反射 IP 端口信息。
+3. Relay Candidate：向中继服务器发送 TURN 协议。（TURN 依赖 STUN 协议实现）
+
+### ICE 具体功能
+
+1. 收集 Candidate。
+2. 对 Candidate Pair 排序。
+   - 同意局域网，内网中：则使用本机 Candidate。
+   - 不在同一网络中，P2P：使用 P2P 进行直连。
+   - 最后选择中继模式。
+3. 连通性检查：发送侦测包检查联通。
+
+## DTLS 协议
+
+DTLS 主要实现数据安全传输。
+
+1. 非对称加密；
+2. 数字签名；
+3. 数字证书。
+
+常见的加密算法：
+
+|         |                                                                 |
+| ------- | --------------------------------------------------------------- |
+| MD5     | 使用的是哈希函数计算信息摘要                                    |
+| SHA1    | 与 MD5 类似，但比 MD5 安全性更强                                |
+| HMAC    | 以信息与 Key 为源，再通过 MD5/SHA1 输出摘要                     |
+| RSA     | RSA 算法是目前最流行的非对称加密算法                            |
+| ECC     | 也是一种非对称加密算法，它的安全性比 RSA 更高，不过性能要差一些 |
+| AES/DES | 对称加密算法                                                    |
+
+## OpenSSL
+
+SSL 为安全套接字（Secure Sockets Layer）。OpenSSL 指开源的 SSL。SSL 3.0 之后标准化的 SSL 改名为 TLS（Transport Layer Security），因此 TLS 实际就是 SSL。
+
+### TLS 协议
+
+1. TLS 握手协议：交换证书、加密信息等信息交互。
+2. TLS 记录协议：通过握手协议交换的加密信息，加密传输的数据。
+
+### OpenSSL 原理
+
+使用 OpenSSL 步骤：
+
+1. SSL_CTX：SSL 上下文，包含版本、证书、密钥信息。
+2. SSL：代表一个 SSL 链接，其与 Socket 进行对接。类似有记录协议负责数据加密解密。
+3. SSL_Write/SSL_Read：读写数据。
+
+![0608](./Img/06_08.png)
+
+### DTLS
+
+TLS 是基于 TCP 协议的。DTLS 就是基于 UDP 协议的。OpenSSL 这两个都支持。
+
+DTLS 握手协议如下图：
+
+![0609](./Img/06_09.png)
+
+DTLS 时序图：
+
+![0610](./Img/06_10.png)
+
+其中 SDP 包括密码信息用于验证客户端是有效的。
+
+### DTLS-SRTP
+
+DTLS 与 SRTP 协议的结合，使用 DTLS 握手交换证书、key，交换完成后将这些加密信息交给 SRTP 进行数据加密解密。跳过了 TLS 记录功能。
+>SRTP（Secure Real-time Transport Protocol）是对RTP协议的扩展，旨在提供数据加密、消息认证、完整性保证和重放保护等。SRTP使用AES对RTP/RTCP数据包的载荷进行加密保护，使用HMAC-SHA1提供完整性保护和消息认证。
+
+DTLS 主要解决的问题：
+
+1. 交换密钥：真正进行加解密的是 SRTP 协议，SRTP 加解密使用的是对称加密算法，这样两边需要协商密钥，这就需要 DTLS 交换两边加密密钥。
+2. 加密算法：握手时双方会提供支持的加密算法有哪些，选处同时支持优先级最高好的  WEBRTC 默认是 AES128。
+
+SRTP 主要解决的问题：
+
+1. 对数据加密，保证数据的安全性。
+2. 保证数据的完整性。
+
+SRTP 协议格式如下：
+
+![0611](./Img/06_11.png)
+
+SRTP 协议头与 RTP 头是一样的，SRTP 对于 RTP 负载数据才进行加密。同时有一个扩展的字段，包含两个可选项 SRTP MKI （主 key 的标识）一般不用为 0，Auth Tag 是用于完整性校验，将 RTP 的头和它的加密数据进行哈希计算得出摘要附在加密数据后边也就是 Auth Tag 位置。这样接收端也就可以做一个同样的计算比对 Tag 判断数据完整性。
+
+### libsrtp
+
+通过 libsrtp 实现 SRTP 功能，使用步骤如下图：
+
+![0612](./Img/06_12.png)
+
+其中创建 Session 就是当 DTLS 握手完成后，拿到了 SSL 实例获取加密算法、密钥等信息设置进去创建 Session。一般有两个 Session 分别标识发出去的加密，和接受的解密。

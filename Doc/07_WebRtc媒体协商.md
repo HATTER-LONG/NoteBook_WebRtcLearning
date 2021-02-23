@@ -8,6 +8,7 @@
     - [会话层](#会话层)
     - [媒体层](#媒体层)
     - [SDP 描述信息](#sdp-描述信息)
+    - [SDP 字段含义](#sdp-字段含义)
 
 ## 媒体协商
 
@@ -74,3 +75,28 @@ SDP（Session Description Protocol）它只是一种信息格式的描述标准�
    - `c=*(conn info - optional if included at session-level`：媒体层定义了就是用媒体曾的，否则就使用会话层。
    - `b=*(bandwidth information)`：带宽控制。
    - `a=*(zero or more session attribute lines)`：属性。
+
+### SDP 字段含义
+
+1. Version 必选。
+   - `v=0`：SDP 的版本号，不包括次版本号。
+2. Session Name 必选.
+   - `s=<session name>`：会话名，`s=-` 表示忽略绘画名。
+3. Origin/Owner 必选。
+   - `o=<username><session id><version><network type><address type><address>`：Session 所属信息。具体格式如下例。
+   - `o=- 2387345594375924353 2 IN IP4 127.0.0.1`。
+4. Connection 可选。
+   - `c=<network type><address type><connection address>`：链接类型。
+   - `c=IN IP4 0.0.0.0`。
+5. Media 必选。
+   - `m=<media><port><transport><fmt/payload type list>`：重要字段，描述了音视频基本信息。
+   - `m=audio 1024 UDP/TLS/RTP/SAVPF 111 103 104 9 0 8 106 105 13 126`：UDP/TLS/RTP/SAVPF 传输时底层使用 UDP，基于 UDP 使用 DTLS，在基于 DTLS 使用 SRTP，SRTP 总的内容就是 SAVPF，S 表示安全，A 表示 audio，V 表示 video，P 表示 profile 可配置，F 表示 FeedBack 就是 RTCP。在接下来就是 fmt/payload type list 很明显时 type list，这些数字具体含义需要上下文解析。
+6. Attributes 可选。
+   - `a=<TYPE>` 或 `a=<TYPE>:<VALUES>`。
+   - `a=framerate:<帧速率>`：设置一个帧率。
+7. rtpmap 可选。
+   - `a=rtpmap:<fmt/payload type><encoding name>/<clock rate>[/<encodingparameters>]`：对 rtp 进行配置所形成的配置表，其属于 attributes 的一种所以 `a=`。
+   - `a=rtpmap:103 ISAC/16000`：描述 103 表示编码器为 ISAC 时钟频率为 16000，就是上边 Media 例子中 Payload type list 中的 103 所表示。
+8. fmtp 可选。
+   - `a=fmtp:<format/payload type>`：format parameters。和上边 rtpmap 类似。
+   - `a=fmtp:103 apt=106`：描述 103 与 106 进行关连。

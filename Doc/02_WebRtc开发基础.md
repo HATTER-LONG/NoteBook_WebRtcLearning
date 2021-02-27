@@ -3,6 +3,7 @@
 - [WebRtc 开发基础](#webrtc-开发基础)
   - [WebRtc 源码结构](#webrtc-源码结构)
   - [WebRtc 核心模块 API](#webrtc-核心模块-api)
+    - [WebRtc 重要的类](#webrtc-重要的类)
     - [libjingle 网络传输模块](#libjingle-网络传输模块)
     - [WebRtc Native C++ API](#webrtc-native-c-api)
 
@@ -42,86 +43,27 @@
 
 ## WebRtc 核心模块 API
 
+### WebRtc 重要的类
+
+1. MediaStream：流数据控制实现。
+2. RTCPeerConnection：链接功能大类，包含所有的网络传输等逻辑。
+3. RTCDataChannel：非音视频数据传输实现。
+
 ### libjingle 网络传输模块
 
 WebRTC 重用了 libjingle 的一些组件，主要是 network 和 transport 组件，关于 libjingle 的文档资料可以查看[这里](https://developers.google.com/talk/talk_developers_home)。
 
 ### WebRtc Native C++ API
 
-1. peerconnection API:src/api/peer_connection_interface.h
+- PeerConnection 调用过程： API:src/api/peer_connection_interface.h
 
-```cpp
-// This file contains the PeerConnection interface as defined in
-// https://w3c.github.io/webrtc-pc/#peer-to-peer-connections
-//
-// The PeerConnectionFactory class provides factory methods to create
-// PeerConnection, MediaStream and MediaStreamTrack objects.
-//
-// The following steps are needed to setup a typical call using WebRTC:
-//
-// 1. Create a PeerConnectionFactoryInterface. Check constructors for more
-// information about input parameters.
-//
-// 2. Create a PeerConnection object. Provide a configuration struct which
-// points to STUN and/or TURN servers used to generate ICE candidates, and
-// provide an object that implements the PeerConnectionObserver interface,
-// which is used to receive callbacks from the PeerConnection.
-//
-// 3. Create local MediaStreamTracks using the PeerConnectionFactory and add
-// them to PeerConnection by calling AddTrack (or legacy method, AddStream).
-//
-// 4. Create an offer, call SetLocalDescription with it, serialize it, and send
-// it to the remote peer
-//
-// 5. Once an ICE candidate has been gathered, the PeerConnection will call the
-// observer function OnIceCandidate. The candidates must also be serialized and
-// sent to the remote peer.
-//
-// 6. Once an answer is received from the remote peer, call
-// SetRemoteDescription with the remote answer.
-//
-// 7. Once a remote candidate is received from the remote peer, provide it to
-// the PeerConnection by calling AddIceCandidate.
-//
-// The receiver of a call (assuming the application is "call"-based) can decide
-// to accept or reject the call; this decision will be taken by the application,
-// not the PeerConnection.
-//
-// If the application decides to accept the call, it should:
-//
-// 1. Create PeerConnectionFactoryInterface if it doesn't exist.
-//
-// 2. Create a new PeerConnection.
-//
-// 3. Provide the remote offer to the new PeerConnection object by calling
-// SetRemoteDescription.
-//
-// 4. Generate an answer to the remote offer by calling CreateAnswer and send it
-// back to the remote peer.
-//
-// 5. Provide the local answer to the new PeerConnection by calling
-// SetLocalDescription with the answer.
-//
-// 6. Provide the remote ICE candidates by calling AddIceCandidate.
-//
-// 7. Once a candidate has been gathered, the PeerConnection will call the
-// observer function OnIceCandidate. Send these candidates to the remote peer.
-/////////////////////////////////////////////////////////////////////////////////
+    ![0201](./Img/02_01.png)
 
+  1. 首先 MediaStream 中包含很多音视频轨。
+  2. 下边就是 PeerConnection ，其中由两个线程。Worker thread 和 Signaling thread。
+  3. 创建 peerConnection 工厂实现不同功能：PeerConnectionInterface、LocalMediaStreamInterface、LocalVideo/AudioTrackInterface。
+  4. 使用流程就是先通过 LocalVideo/AudioTrackInterface 创建音视频轨，通过 AddTrack 添加到 LocalMediaStreamInterface，然后通过 AddStream 添加到 PeerConnectionInterface 中，最终通过 CallBack 发送出去。
 
-/////////////////////////////////////////////////////////////////////////////////
-// PeerConnectionFactoryInterface is the factory interface used for creating
-// PeerConnection, MediaStream and MediaStreamTrack objects.
-//
-// The simplest method for obtaiing one, CreatePeerConnectionFactory will
-// create the required libjingle threads, socket and network manager factory
-// classes for networking if none are provided, though it requires that the
-// application runs a message loop on the thread that called the method (see
-// explanation below)
-//
-// If an application decides to provide its own threads and/or implementation
-// of networking classes, it should use the alternate
-// CreatePeerConnectionFactory method which accepts threads as input, and use
-// the CreatePeerConnection version that takes a PortAllocator as an argument.
-class RTC_EXPORT PeerConnectionFactoryInterface
-```
+调用时序图如下：
+
+![0202](./Img/02_02.png)

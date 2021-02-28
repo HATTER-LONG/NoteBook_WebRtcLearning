@@ -8,7 +8,7 @@
     - [模块细致讲解](#模块细致讲解)
   - [参考](#参考)
 
-我们使用 webrtc 的主题要目的是应用它的 A/V 捕获、视频显示、音频播放、音视频压缩、网络通信。本文主要记录再应用程序中如何使用 webrtc 库。
+我们使用 webrtc 的主要目的是应用它的 A/V 捕获、视频显示、音频播放、音视频压缩、网络通信。本文主要记录在应用程序中如何使用 webrtc 库。
 
 ## 什么是 WebRtc
 
@@ -42,7 +42,7 @@ WebRTC（Web Real-Time Communication）项目的最终目的主要是让 Web 开
 1. Your Web App：Web 开发者开发的程序，Web 开发者可以基于集成 WebRTC 的浏览器提供的 web API 开发基于视频、音频的实时通信应用。
 2. Web API：面向第三方开发者的 WebRTC 标准 API（Javascript），使开发者能够容易地开发出类似于网络视频聊天的 web 应用。
 3. WebRTC Native C++ API：本地 C++ API 层，使浏览器厂商容易实现 WebRTC 标准的 Web API，抽象地对数字信号过程进行处理。这一层的主要作用就是把 WebRtc 的核心功能暴露出来，如设备管理，音视频流数据采集等，方便各个软件厂商集成到自家应用中，比如浏览器厂商。其中 PeerConnection 是该层最核心的一个模块，即对等连接模块；该模块中实现了很多功能，如 P2P 穿洞、通信链路的建立和优选、流数据传输、非音视频数据传输、传输质量报告和统计等。
-4. Transport / Session：传输/会话层，会话层组件采用了 libjingle 库的部分组件实现，无须使用 协议。XMPP/jingle 协议。
+4. Transport / Session：传输/会话层，会话层组件采用了 libjingle 库的部分组件实现，使用 XMPP/jingle 协议。
    - XMPP 协议：主要用于解决获取用户列表、交换用户数、信令交换。
    - RTP Stack 协议：Real Time Protocol。
    - STUN / ICE：可以通过 STUN 和 ICE 组件来建立不同类型网络间的呼叫连接。现实网络环境有三种情况：

@@ -53,7 +53,7 @@ RTCP Header 如下：
 RTCP 常见 [类型](https://www.jianshu.com/p/c2778eba3bb6) 如下（[SR 与 RR 的区别](https://blog.csdn.net/csdn_zmf/article/details/105575968)）：
 
 1. SR：将 sender 自己发送的信息告诉对端，同时将自己接收的信息也告诉对端。
-2. RR：当报文发送方只作为接收者，而不发送媒体数据时，发给对端自己作为接收方接收到的数据的统计信息。
+2. RR：当只作为接收者，而不发送媒体数据时，发给对端自己作为接收方接收到的数据的统计信息。
 3. SDES：数据源的信息。可以避免 SSRC 变化后找到源信息。
 4. BYE：结束传输。
 5. APP：应用层自定义。
@@ -82,7 +82,7 @@ RTCP 常见 [类型](https://www.jianshu.com/p/c2778eba3bb6) 如下（[SR 与 RR
 RTCP SR 报文信息格式如下：
 
 1. header：
-   - 头信息部分与前边所描述的多出了，SSRC of sender 字段，这样当接收端接受到了后可以直到谁发送的。
+   - 头信息部分与前边所描述的多出了 SSRC of sender 字段，这样当接收端接受到了后可以知道是谁发送的。
    - RC：指 SR report block 数量，注意对于不同的 PT 类型其含义不一样。
 2. sender info：记录了发送者发送了多少字节报文。
 3. report block：这个段有很多，由于作为多方通信会接收到好记录数据，对于每一个 SSRC 都有一个报告块，音频、视频不共用。

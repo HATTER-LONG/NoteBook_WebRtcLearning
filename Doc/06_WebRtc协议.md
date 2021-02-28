@@ -26,6 +26,7 @@
     - [DTLS](#dtls)
     - [DTLS-SRTP](#dtls-srtp)
     - [libsrtp](#libsrtp)
+  - [抓取网络包分析](#抓取网络包分析)
 
 WebRtc 传输需要依赖的网络知识包括：
 
@@ -206,13 +207,13 @@ ICE（interactive Connectivity Establishment），需要通讯的两端进行交
 
 ### ICE Candidate
 
-可以进行链接的地址，每个 candidate 是一个地址，其包括：协议、IP、端口 和 类型。
+可以进行链接的地址，每个 candidate 是一个地址，其包括：协议、IP、端口 和 类型。通过 SDP 协议格式进行交换。
 > a=candidate:...UDP...192.169.1.2 1816  type:host
 
 ### Candidate 类型
 
 1. 主机候选者。本机的地址信息。
-2. 反射候选者。穿过 NAT 后被转换过的地址信息。
+2. 反射候选者。穿过 NAT 后被转换过的地址信息。通过 STUN 获取到后，尝试 P2P 链接。
 3. 中继候选者。当穿越 NAT 不成功后，需要服务器中转后的地址信息。
 
 ![0607](./Img/06_07.png)
@@ -312,3 +313,44 @@ SRTP 协议头与 RTP 头是一样的，SRTP 对于 RTP 负载数据才进行加
 ![0612](./Img/06_12.png)
 
 其中创建 Session 就是当 DTLS 握手完成后，拿到了 SSL 实例获取加密算法、密钥等信息设置进去创建 Session。一般有两个 Session 分别标识发出去的加密，和接受的解密。
+
+## 抓取网络包分析
+
+1. tcpdump：
+   - tcpdump -i eth0 src port 80 -xx -Xs 0 -w test.cap
+   - -i：指定网卡。
+   - src：指明包的来源。
+   - port：指明端口号。
+   - -xx：指抓到的包以 16 进制显示。
+   - -X：指以 ASCII 码显示。
+   - -s 0：指明抓整个包。
+   - -w：写到指定文件。
+
+2. wireshark：
+   - 逻辑语句：
+     - 与：and 或 &&。
+     - 或：or 或 ||。
+     - 非：not 或 !。
+     - 等于：eq 或 ==。
+     - 小于：lt 或 <。
+     - 大于：gt 或 >。
+     - 小于等于：le 或 <=。
+     - 大于等于：ge 或 >=。
+     - 不等于：ne 或 !=。
+   - 按协议过滤：
+     - stun：过滤搜索 stun。turn 服务是基于 stun，因此可以看到 stun 协议进行 allocate Request UDP 请求。
+     - tcp。
+     - udp。
+   - 按 IP 过滤：
+     - ip.dst == xxx.xxx.xxx.xxx：指定目的 ip 地址。
+     - ip.src == xxx.xxx.xxx.xxx：指定发送端源地址 ip。
+     - ip.addr == xxx.xxx.xxx.xxx：指定 ip。
+   - 按 Port 过滤：
+     - tcp.port == 8080。
+     - udp.port == 3478。
+     - udp.dstport == 3478。
+     - udp.srcport == 3478。
+   - 长度过滤：
+     - udp.length < 30。
+     - tcp.length < 30。
+     - http.content_length < 30。

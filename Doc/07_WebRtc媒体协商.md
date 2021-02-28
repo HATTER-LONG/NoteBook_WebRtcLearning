@@ -3,6 +3,7 @@
 - [WebRtc 媒体协商](#webrtc-媒体协商)
   - [媒体协商](#媒体协商)
     - [媒体协商的方法](#媒体协商的方法)
+    - [端对端的链接流程](#端对端的链接流程)
   - [SDP 协议](#sdp-协议)
     - [SDP 规范](#sdp-规范)
     - [会话层](#会话层)
@@ -13,13 +14,20 @@
     - [简单示例](#简单示例)
   - [总结](#总结)
 
+WebRtc 端到端链接最主要的实现就是 RTCPeerConnection。其基本使用格式 `pc = new RTCPeerConnection([configuration]);`。其功能方法可分为以下几类：
+
+1. 媒体协商：链接双方交换媒体信息。
+2. Stream/Track：流与轨，传输的每一路是一路流，流中包含多个轨。
+3. 传输相关方法：查看链路质量等等。
+4. 统计相关：编解码器、传输数据格式、链路信息等。
+
 ## 媒体协商
 
 A 与 B 之间在媒体通信之前需要进行通信让彼此知道对方的媒体相关信息，例如知道对方编解码能力、是否有音频、音视频格式等等，了解是否能解码对方的音视频数据，交换信息的过程就是媒体协商。
 
 - 媒体协商链接创建流程：
   1. A 发起者通过 peerconnection 发起 offer 请求。
-  2. A 通过 setLocalDescription 将请求缓存。
+  2. A 通过 setLocalDescription 将请求缓存，同时收集 candidate。
   3. A 通过信令将 offer 发送对端。
   4. B 接收端通过 setRemoteDescription 将收到的 offer 缓存。
   5. B 同样通过 peerconnection 生成一个 Answer。
@@ -29,16 +37,27 @@ A 与 B 之间在媒体通信之前需要进行通信让彼此知道对方的媒
 
 ![0701](./Img/07_01.png)
 
-收到的 offer 和 answer 就是标识着对方的媒体流是什么，支持哪些编解码，SSRC、ICE、DTLS信息等。对于流媒体服务器来说，当接受这些信息需要去底层加载相应的编解码器，用来解码对端的信息；同时还可以根据对端编码能力信息，选择一个最优的编码器来编码数据。
+收到的 offer 和 answer 就是标识着对方的媒体流是什么，支持哪些编解码，SSRC、ICE、DTLS 信息等。对于流媒体服务器来说，当接受这些信息需要去底层加载相应的编解码器，用来解码对端的信息；同时还可以根据对端编码能力信息，选择一个最优的编码器来编码数据。
 
 同时其中的 offer 与 answer 可以不采用 SDP 协议格式，传递自定义的格式信息到标准终端时需要进行转换。
 
 ### 媒体协商的方法
 
-1. createOffer
-2. createAnswer
-3. setLocalDescription
-4. setRemoteDescription
+1. createOffer：`aPromise = myPeerConnection.createOffer([options]);`
+2. createAnswer：`aPromise = myPeerConnection.createAnswer([options]);`
+3. setLocalDescription：`aPromise = myPc.setLocalDescription(sessionDescription);`，将上边的 aPromise 传入。
+4. setRemoteDescription：`aPromise = myPc.setRemoteDescription(sessionDescription);`
+5. addTrack：`rtpSender = myPc.addTrack(track,stream...);`，添加到 RTCPeerConnection 中的媒体轨，track 指明添加的轨，stream 指定 track 所在的 stream。
+6. removeTrack：`myPv.removeTrack(rtpSender);`，将 addtrack 得到的 sender 传入即可。
+
+重要事件：
+
+1. onnegotiationneeded：协商事件，进行媒体协商时触发。
+2. onicecandidate：收到一个 ICE 候选者时触发。
+
+### 端对端的链接流程
+
+![0704](./Img/07_04.png)
 
 ## SDP 协议
 
@@ -61,7 +80,7 @@ SDP（Session Description Protocol）它只是一种信息格式的描述标准�
 1. 媒体格式。
 2. 传输协议：TCP/UDP。
 3. 传输 IP 和端口。
-4. 媒体的负载类型：AAC、OPUS、H264等等。
+4. 媒体的负载类型：AAC、OPUS、H264 等等。
 
 ### SDP 描述信息
 
@@ -83,7 +102,7 @@ SDP（Session Description Protocol）它只是一种信息格式的描述标准�
 
 1. Version 必选。
    - `v=0`：SDP 的版本号，不包括次版本号。
-2. Session Name 必选.
+2. Session Name 必选。
    - `s=<session name>`：会话名，`s=-` 表示忽略会话名。
 3. Origin/Owner 必选。
    - `o=<username><session id><version><network type><address type><address>`：Session 所属信息。具体格式如下例。
@@ -128,76 +147,76 @@ WebRtc 所使用的 SDP 协议与标准的还是存在些区别，它分为五�
 ### 简单示例
 
 ```shell
-                      【Session Metadata部分】
+                      【Session Metadata 部分】
 v=0
-//sdp版本号，一直为0,rfc4566规定
+//sdp 版本号，一直为 0,rfc4566 规定
 
 o=- 7017624586836067756 2 IN IP4 127.0.0.1
 //origion/owner  o=<username> <session id> <version> <network type> <address type> <unicast-address>
-//username如何没有使用-代替，7017624586836067756是整个会话的编号，2代表会话版本，如果在会话
-//过程中有改变编码之类的操作，重新生成sdp时,sess-id不变，sess-version加1
+//username 如何没有使用-代替，7017624586836067756 是整个会话的编号，2 代表会话版本，如果在会话
+//过程中有改变编码之类的操作，重新生成 sdp 时，sess-id 不变，sess-version 加 1
 
 s=-
-//会话名,必选，没有的话使用-代替
+//会话名，必选，没有的话使用-代替
 
 t=0 0
-//两个值分别是会话的起始时间和结束时间，这里都是0代表没有限制
+//两个值分别是会话的起始时间和结束时间，这里都是 0 代表没有限制
 
 a=group:BUNDLE audio video data
-//需要共用一个传输通道传输的媒体，如果没有这一行，音视频，数据就会分别单独用一个udp端口来发送
+//需要共用一个传输通道传输的媒体，如果没有这一行，音视频，数据就会分别单独用一个 udp 端口来发送
 
 a=msid-semantic: WMS h1aZ20mbQB0GSsq0YxLfJmiYWE9CBfGch97C
-//WMS是WebRTC Media Stream简称，这一行定义了本客户端支持同时传输多个流，一个流可以包括多个track,
-//一般定义了这个，后面a=ssrc这一行就会有msid,mslabel等属性
+//WMS 是 WebRTC Media Stream 简称，这一行定义了本客户端支持同时传输多个流，一个流可以包括多个 track,
+//一般定义了这个，后面 a=ssrc 这一行就会有 msid,mslabel 等属性
 
-                          【Stream Description部分】
+                          【Stream Description 部分】
                           
-        【audio部分】
+        【audio 部分】
         
 m=audio 9 UDP/TLS/RTP/SAVPF 111 103 104 9 0 8 106 105 13 126
 //m = <media><port><transport><fmt/payload type list>
-//m=audio说明本会话包含音频，9代表音频使用端口9来传输，但是在webrtc中一现在一般不使用，如果设置为0，代表不
-//传输音频,UDP/TLS/RTP/SAVPF是表示用户来传输音频支持的协议，udp，tls,rtp代表使用udp来传输rtp包，并使用tls加密
-//SAVPF代表使用srtcp的反馈机制来控制通信过程,后台111 103 104 9 0 8 106 105 13 126表示本会话音频支持的编码，后台几行会有详细补充说明
+//m=audio 说明本会话包含音频，9 代表音频使用端口 9 来传输，但是在 webrtc 中一现在一般不使用，如果设置为 0，代表不
+//传输音频，UDP/TLS/RTP/SAVPF 是表示用户来传输音频支持的协议，udp，tls,rtp 代表使用 udp 来传输 rtp 包，并使用 tls 加密
+//SAVPF 代表使用 srtcp 的反馈机制来控制通信过程，后台 111 103 104 9 0 8 106 105 13 126 表示本会话音频支持的编码，后台几行会有详细补充说明
 
 c=IN IP4 0.0.0.0
-//这一行表示你要用来接收或者发送音频使用的IP地址，webrtc使用ice传输，不使用这个地址
+//这一行表示你要用来接收或者发送音频使用的 IP 地址，webrtc 使用 ice 传输，不使用这个地址
 
 a=rtcp:9 IN IP4 0.0.0.0
-//用来传输rtcp地地址和端口，webrtc中不使用
+//用来传输 rtcp 地地址和端口，webrtc 中不使用
 
 a=ice-ufrag:khLS
 a=ice-pwd:cxLzteJaJBou3DspNaPsJhlQ
-//以上两行是ice协商过程中的安全验证信息
+//以上两行是 ice 协商过程中的安全验证信息
 
 a=fingerprint:sha-256 FA:14:42:3B:C7:97:1B:E8:AE:0C2:71:03:05:05:16:8F:B9:C7:98:E9:60:43:4B:5B:2C:28:EE:5C:8F3:17
-//以上这行是dtls协商过程中需要的认证信息
+//以上这行是 dtls 协商过程中需要的认证信息
 
 a=setup:actpass
-//以上这行代表本客户端在dtls协商过程中，可以做客户端也可以做服务端，参考rfc4145 rfc4572
+//以上这行代表本客户端在 dtls 协商过程中，可以做客户端也可以做服务端，参考 rfc4145 rfc4572
 
 a=mid:audio
-//在前面BUNDLE这一行中用到的媒体标识
+//在前面 BUNDLE 这一行中用到的媒体标识
 
 a=extmap:1 urn:ietf:params:rtp-hdrext:ssrc-audio-level
-//上一行指出我要在rtp头部中加入音量信息，参考 rfc6464
+//上一行指出我要在 rtp 头部中加入音量信息，参考 rfc6464
 
 a=sendrecv
-//上一行指出我是双向通信，另外几种类型是recvonly,sendonly,inactive
+//上一行指出我是双向通信，另外几种类型是 recvonly,sendonly,inactive
 
 a=rtcp-mux
-//上一行指出rtp,rtcp包使用同一个端口来传输
+//上一行指出 rtp,rtcp 包使用同一个端口来传输
 
-//下面几行都是对m=audio这一行的媒体编码补充说明，指出了编码采用的编号，采样率，声道等
+//下面几行都是对 m=audio 这一行的媒体编码补充说明，指出了编码采用的编号，采样率，声道等
 a=rtpmap:111 opus/48000/2
 //可选 a=rtpmap:<fmt/payload type><encoding name>/<clock rate>[/<encodingparameters>]
 
 a=rtcp-fb:111 transport-cc
-//以上这行说明opus编码支持使用rtcp来控制拥塞，参考https://tools.ietf.org/html/draft-holmer-rmcat-transport-wide-cc-extensions-01
+//以上这行说明 opus 编码支持使用 rtcp 来控制拥塞，参考 https://tools.ietf.org/html/draft-holmer-rmcat-transport-wide-cc-extensions-01
 
 a=fmtp:111 minptime=10;useinbandfec=1
-//可选 a=fmtp:<fmt/payload type> parameters  对rtpmap进一步说明
-//对opus编码可选的补充说明,minptime代表最小打包时长是10ms，useinbandfec=1代表使用opus编码内置fec特性
+//可选 a=fmtp:<fmt/payload type> parameters  对 rtpmap 进一步说明
+//对 opus 编码可选的补充说明，minptime 代表最小打包时长是 10ms，useinbandfec=1 代表使用 opus 编码内置 fec 特性
 
 a=rtpmap:103 ISAC/16000
 a=rtpmap:104 ISAC/32000
@@ -209,19 +228,19 @@ a=rtpmap:105 CN/16000
 a=rtpmap:13 CN/8000
 a=rtpmap:126 telephone-event/8000
 a=ssrc:18509423 cname:sTjtznXLCNH7nbRw
-//cname用来标识一个数据源，ssrc当发生冲突时可能会发生变化，但是cname不会发生变化，也会出现在rtcp包中SDEC中，
+//cname 用来标识一个数据源，ssrc 当发生冲突时可能会发生变化，但是 cname 不会发生变化，也会出现在 rtcp 包中 SDEC 中，
 //用于音视频同步
 
 a=ssrc:18509423 msid:h1aZ20mbQB0GSsq0YxLfJmiYWE9CBfGch97C 15598a91-caf9-4fff-a28f-3082310b2b7a
-//以上这一行定义了ssrc和WebRTC中的MediaStream,AudioTrack之间的关系，msid后面第一个属性是stream-d,第二个是track-id
+//以上这一行定义了 ssrc 和 WebRTC 中的 MediaStream,AudioTrack 之间的关系，msid 后面第一个属性是 stream-d, 第二个是 track-id
 
 a=ssrc:18509423 mslabel:h1aZ20mbQB0GSsq0YxLfJmiYWE9CBfGch97C
 a=ssrc:18509423 label:15598a91-caf9-4fff-a28f-3082310b2b7a
 
-       【video部分】
+       【video 部分】
        
 m=video 9 UDP/TLS/RTP/SAVPF 100 101 107 116 117 96 97 99 98
-//参考上面m=audio,含义类似
+//参考上面 m=audio, 含义类似
 
 c=IN IP4 0.0.0.0
 a=rtcp:9 IN IP4 0.0.0.0
@@ -240,19 +259,19 @@ a=rtcp-mux
 a=rtcp-rsize
 a=rtpmap:100 VP8/90000
 a=rtcp-fb:100 ccm fir
-//ccm是codec control using RTCP feedback message简称，意思是支持使用rtcp反馈机制来实现编码控制，fir是Full Intra Request
+//ccm 是 codec control using RTCP feedback message 简称，意思是支持使用 rtcp 反馈机制来实现编码控制，fir 是 Full Intra Request
 //简称，意思是接收方通知发送方发送幅完全帧过来
 a=rtcp-fb:100 nack
-//支持丢包重传，参考rfc4585
+//支持丢包重传，参考 rfc4585
 
 a=rtcp-fb:100 nack pli
-//支持关键帧丢包重传,参考rfc4585
+//支持关键帧丢包重传，参考 rfc4585
 
 a=rtcp-fb:100 goog-remb
-//支持使用rtcp包来控制发送方的码流
+//支持使用 rtcp 包来控制发送方的码流
 
 a=rtcp-fb:100 transport-cc
-//参考上面opus
+//参考上面 opus
 a=rtpmap:101 VP9/90000
 a=rtcp-fb:101 ccm fir
 a=rtcp-fb:101 nack
@@ -267,16 +286,16 @@ a=rtcp-fb:107 goog-remb
 a=rtcp-fb:107 transport-cc
 a=fmtp:107 level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=42e01f
 
-//h264编码可选的附加说明
+//h264 编码可选的附加说明
 a=rtpmap:116 red/90000
-//fec冗余编码，一般如果sdp中有这一行的话，rtp头部负载类型就是116，否则就是各编码原生负责类型
+//fec 冗余编码，一般如果 sdp 中有这一行的话，rtp 头部负载类型就是 116，否则就是各编码原生负责类型
 
 a=rtpmap:117 ulpfec/90000
-//支持ULP FEC，参考rfc5109
+//支持 ULP FEC，参考 rfc5109
 
 a=rtpmap:96 rtx/90000
 a=fmtp:96 apt=100
-//以上两行是VP8编码的重传包rtp类型
+//以上两行是 VP8 编码的重传包 rtp 类型
 
 a=rtpmap:97 rtx/90000
 a=fmtp:97 apt=101
@@ -285,7 +304,7 @@ a=fmtp:99 apt=107
 a=rtpmap:98 rtx/90000
 a=fmtp:98 apt=116
 a=ssrc-group:FID 3463951252 1461041037
-//在webrtc中，重传包和正常包ssrc是不同的，上一行中前一个是正常rtp包的ssrc,后一个是重传包的ssrc
+//在 webrtc 中，重传包和正常包 ssrc 是不同的，上一行中前一个是正常 rtp 包的 ssrc, 后一个是重传包的 ssrc
 
 a=ssrc:3463951252 cname:sTjtznXLCNH7nbRw
 a=ssrc:3463951252 msid:h1aZ20mbQB0GSsq0YxLfJmiYWE9CBfGch97C ead4b4e9-b650-4ed5-86f8-6f5f5806346d
